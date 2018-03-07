@@ -1,0 +1,1 @@
+cmd_/home/jz/test/esd_learn/driver_a83T/rlm600/gpio_uhf.ko := /home/jz/tools/gcc-linaro/bin/arm-linux-gnueabi-ld -EL -r  -T /home/jz/test/linux-3.4.A83t/scripts/module-common.lds --build-id  -o /home/jz/test/esd_learn/driver_a83T/rlm600/gpio_uhf.ko /home/jz/test/esd_learn/driver_a83T/rlm600/gpio_uhf.o /home/jz/test/esd_learn/driver_a83T/rlm600/gpio_uhf.mod.o

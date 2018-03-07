@@ -1,0 +1,366 @@
+31:03.807 [401bd3dc] [SDL] SDL_Deinit( 0x0 )
+
+31:03.807 [401bd3dc] >SAL_EventDestroy pEv=682256b8
+31:03.807 [401bd3dc]  SAL_EventDestroy pEv=682256b8, locked Mutex
+31:03.807 [401bd3dc] >[SAL]Sleep 10...
+31:03.817 [401bd3dc]  SAL_EventDestroy pEv=682256b8, destroying cond 682256c4...
+31:03.817 [401bd3dc]  SAL_EventDestroy pEv=682256b8, pthread_cond_destroy rc=0
+31:03.817 [401bd3dc] <SAL_MemFree 682256b8
+31:03.817 [401bd3dc] <SAL_EventDestroy
+31:03.817 [401bd3dc] >SAL_EventDestroy pEv=68094798
+31:03.817 [401bd3dc]  SAL_EventDestroy pEv=68094798, locked Mutex
+31:03.817 [401bd3dc] >[SAL]Sleep 10...
+31:03.827 [401bd3dc]  SAL_EventDestroy pEv=68094798, destroying cond 680947a4...
+31:03.827 [401bd3dc]  SAL_EventDestroy pEv=68094798, pthread_cond_destroy rc=0
+31:03.827 [401bd3dc] <SAL_MemFree 68094798
+31:03.827 [401bd3dc] <SAL_EventDestroy
+31:03.827 [401bd3dc] >SAL_EventDestroy pEv=683ba580
+31:03.827 [401bd3dc]  SAL_EventDestroy pEv=683ba580, locked Mutex
+31:03.827 [401bd3dc] >[SAL]Sleep 10...
+31:03.837 [401bd3dc]  SAL_EventDestroy pEv=683ba580, destroying cond 683ba58c...
+31:03.837 [401bd3dc]  SAL_EventDestroy pEv=683ba580, pthread_cond_destroy rc=0
+31:03.837 [401bd3dc] <SAL_MemFree 683ba580
+31:03.838 [401bd3dc] <SAL_EventDestroy
+31:03.838 [401bd3dc] [API] destroySDL
+
+31:03.838 [401bd3dc] [API] SDLAPI_Close
+
+33:11.838 [401bd3dc] SE4500:setCamIOCtl: pfn=0x64e31f49 pCtx=67B5D388
+33:11.838 [401bd3dc] [API] SDLAPI_Open pV=41d28e90
+
+33:11.838 [401bd3dc] [API] createSDL
+
+33:11.838 [401bd3dc] >CfgGet: pvOut=bea533f4, max=4
+33:11.838 [401bd3dc] <SAL_MemAlloc 680b9008 179 bytes
+33:11.838 [401bd3dc] CfgGet: read 178, squished to 163 bytes
+
+33:11.838 [401bd3dc] SAL_GetSysProperty: [name=AllowParamBarcodes, type=0, pvOut=bea533f4, nBytes=4] CfgGet FAILED iRet=-2
+
+33:11.838 [401bd3dc] >CfgGet: pvOut=bea533f4, max=4
+33:11.838 [401bd3dc] SAL_GetSysProperty: [name=PicklistMode, type=0, pvOut=bea533f4, nBytes=4] CfgGet FAILED iRet=-2
+
+33:11.838 [401bd3dc] <SAL_MemAllocClr 680b90c0 20 bytes
+33:11.838 [401bd3dc] >SAL_EventCreate
+33:11.838 [401bd3dc] <SAL_EventCreate pEv=680b90c0 size=20
+33:11.838 [401bd3dc] [API] createSDL s_hSDLDevice=694b0664
+
+33:11.838 [401bd3dc] [SDL] SDL_IOControl: code=0xa
+
+33:11.838 [401bd3dc] >SE45Ial:getAttachments
+33:11.838 [401bd3dc] IAL_DiscoverImagers() ...
+33:11.838 [401bd3dc] >CfgGet: pvOut=bea5330c, max=32
+33:11.838 [401bd3dc] >CfgGet: pvOut=bea532ec, max=32
+33:11.838 [401bd3dc] IAL: GetI2CInterface() [Android//dev/moto_sdl]
+33:11.838 [401bd3dc] <SAL_MemAllocClr 680b90d8 20 bytes
+33:11.839 [401bd3dc] <SAL_MutexCreate 680b90d8
+33:11.839 [401bd3dc] I2cLinux::I2cLinux() open() OK
+33:11.839 [401bd3dc] IAL_GetImagerList() ...
+33:11.839 [401bd3dc] <SE45Ial:getAttachments
+33:11.839 [401bd3dc] >CfgGet: pvOut=bea53388, max=4
+33:11.866 [401bd3dc] >CfgGet: pvOut=bea532e0, max=4
+33:11.866 [401bd3dc] SAL_GetSysProperty: [name=PixelClkFreq, type=0, pvOut=bea532e0, nBytes=4] CfgGet FAILED iRet=-2
+
+33:11.866 [401bd3dc] [SDL] SDL_IOControl: code=0xa, dwRet=0
+
+33:11.866 [401bd3dc] [API] SDLAPI_Open: SUCCESS!!
+
+33:11.866 [401bd3dc] [API] SDLAPI_RegEventCB pfn=64e31df5, pCtx=67b5d388
+33:11.866 [401bd3dc] [API] SDLAPI_RegFrameCB pfn=64e3183d, pCtx=67b5d388
+33:11.866 [401bd3dc] [API] SDLAPI_Attach
+
+33:11.866 [401bd3dc] <SAL_MemAllocClr 680b9308 20 bytes
+33:11.866 [401bd3dc] >SAL_EventCreate
+33:11.866 [401bd3dc] <SAL_EventCreate pEv=680b9308 size=20
+33:11.866 [401bd3dc] <SAL_MemAllocClr 680b9320 20 bytes
+33:11.866 [401bd3dc] >SAL_EventCreate
+33:11.867 [401bd3dc] <SAL_EventCreate pEv=680b9320 size=20
+33:11.867 [401bd3dc] [SDL] SDL_IOControl: code=0x1
+
+33:11.867 [401bd3dc] [API] SDL_Connect
+33:11.867 [401bd3dc] <SAL_MemAllocClr 680b9338 20 bytes
+33:11.867 [401bd3dc] <SAL_SemaphoreCreate 680b9338
+33:11.867 [401bd3dc] <SAL_MemAllocClr 680b9350 20 bytes
+33:11.867 [401bd3dc] <SAL_MutexCreate 680b9350
+33:11.867 [401bd3dc] [EVT] Post -> evSysModeChange(Decode)
+33:11.867 [401bd3dc] <SAL_MemAllocClr 680b9368 20 bytes
+33:11.867 [401bd3dc] <SAL_MutexCreate 680b9368
+33:11.867 [401bd3dc] <SAL_MemAllocClr 680b9380 20 bytes
+33:11.867 [401bd3dc] <SAL_MutexCreate 680b9380
+33:11.867 [401bd3dc] <SAL_MemAllocClr 680b9398 20 bytes
+33:11.867 [401bd3dc] <SAL_SemaphoreCreate 680b9398
+33:11.867 [401bd3dc] <SAL_MemAllocClr 680b93b0 20 bytes
+33:11.867 [401bd3dc] >SAL_EventCreate
+33:11.867 [401bd3dc] <SAL_EventCreate pEv=680b93b0 size=20
+33:11.867 [401bd3dc] <SAL_MemAllocClr 683bb1d0 20 bytes
+33:11.867 [401bd3dc] >SAL_EventCreate
+33:11.867 [401bd3dc] <SAL_EventCreate pEv=683bb1d0 size=20
+33:11.867 [401bd3dc] <SAL_MemAllocClr 683cab68 24 bytes
+33:11.867 [401bd3dc] <SAL_MemAllocClr 683bb2b0 20 bytes
+33:11.867 [401bd3dc] >SAL_EventCreate
+33:11.867 [401bd3dc] <SAL_EventCreate pEv=683bb2b0 size=20
+33:11.867 [401bd3dc] <SAL_ThreadCreate: 67b5d2d8 SUCCESS (count=2, ptc=683cab68, size=24)
+33:11.867 [67b5d2d8] >ctl_thread [3] started
+33:11.867 [401bd3dc] >CfgGet: pvOut=bea5335c, max=4
+33:11.867 [67b5d2d8] [DEC] Decode thread start
+33:11.867 [401bd3dc] SAL_GetSysProperty: [name=DecodeThreadPriority, type=0, pvOut=bea5335c, nBytes=4] CfgGet FAILED iRet=-2
+
+33:11.867 [401bd3dc] [DEC]_InitModule: DecOpen ret=0 errno=22
+33:11.867 [401bd3dc] <SAL_InitModule
+
+33:11.867 [401bd3dc] >SE45WinCeIal::open
+33:11.867 [401bd3dc] >IalLib::connect isValid=1
+33:11.867 [401bd3dc] IAL_Connect() ...
+33:11.867 [401bd3dc] >SE4500:Connect
+33:11.867 [401bd3dc] <SAL_MemAllocClr 67b5d5b8 20 bytes
+33:11.867 [401bd3dc] >SAL_EventCreate
+33:11.867 [401bd3dc] <SAL_EventCreate pEv=67b5d5b8 size=20
+33:11.867 [401bd3dc] SE4500:Connect - Calling Camera Ioctl - SE45_IOCTL_ALLOC_BUFFER
+33:11.879 [401bd3dc] SE4500:Connect - Creating Moto SDL system thread
+33:11.879 [401bd3dc] <SAL_MemAllocClr 67b5d5d0 24 bytes
+33:11.879 [401bd3dc] <SAL_MemAllocClr 67b5d5f0 20 bytes
+33:11.879 [401bd3dc] >SAL_EventCreate
+33:11.879 [401bd3dc] <SAL_EventCreate pEv=67b5d5f0 size=20
+33:11.879 [401bd3dc] <SAL_ThreadCreate: 67b5d608 SUCCESS (count=0, ptc=67b5d5d0, size=24)
+33:11.879 [401bd3dc] >SE4500:StopSession
+33:11.879 [67b5d608] >ctl_thread [1] started
+33:11.879 [67b5d608] >IAL thread - SE4500:handle_events STARTED
+33:11.879 [401bd3dc] <SE4500:StopSession
+33:11.879 [401bd3dc] <SE4500:Connect ret=0
+33:11.879 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:11.879 [401bd3dc] <SE45WinCeIal::open
+33:11.879 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:11.893 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_AUTH [7f] (125) to SE45xx = OK
+33:11.906 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_RESET [57] (1) to SE45xx = OK
+33:11.906 [401bd3dc] >[SAL]Sleep 50...
+33:11.971 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_GETPARAM [70] (12) to SE45xx = OK
+33:11.971 [401bd3dc] [SCN] DPM-cal params: (612,411), (702,414), (105,312), (500,512)
+33:11.971 [401bd3dc] Committing script [ScriptDecodeActive] len=22 to Eng
+33:11.985 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_WRITESCRIPT [76] (2) to SE45xx = OK
+33:11.985 [401bd3dc] Committing script [ScriptAllIdle] len=16 to Eng
+33:11.999 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_WRITESCRIPT [76] (3) to SE45xx = OK
+33:12.012 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_TIMETOLOWPOWER [75] (20) to SE45xx = OK
+33:12.025 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_AUTOPOWERREDUCTION [74] (1) to SE45xx = OK
+33:12.037 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_HARDWARE_ASSIST [84] (1) to SE45xx = OK
+33:12.037 [401bd3dc] >CfgGet: pvOut=bea5324c, max=4
+33:12.037 [401bd3dc] SAL_GetSysProperty: [name=EngineInterface, type=0, pvOut=bea5324c, nBytes=4] CfgGet FAILED iRet=-2
+
+33:12.050 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_IMAGER_INTERFACE [86] (4) to SE45xx = OK
+33:12.068 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_SET_FRAME_CONFIGS [8e] (0) to SE45xx = OK
+33:12.083 [401bd3dc] [SCN] issueEngineCmd-1: SE45OP_SET_FRAME_SEQUENCE [8f] (2) to SE45xx = OK
+33:12.083 [401bd3dc] <SAL_MemAllocClr 683c9a58 24 bytes
+33:12.083 [401bd3dc] <SAL_MemAllocClr 683c9a78 20 bytes
+33:12.083 [401bd3dc] >SAL_EventCreate
+33:12.083 [401bd3dc] <SAL_EventCreate pEv=683c9a78 size=20
+33:12.083 [401bd3dc] <SAL_ThreadCreate: 683c9a90 SUCCESS (count=3, ptc=683c9a58, size=24)
+33:12.083 [601bd3dc] >CfgGet: pvOut=bea53378
+ max=4
+33:12.083 [683c9a90] [SYS] Main thread start
+33:12.083 [401bd3dc] SAL_GetSysProperty: [name=SystemThreadPriority, type=0, pvOut=bea53378, nBytes=4] CfgGet FAILED iRet=-2
+
+33:12.083 [401bd3dc] [SDL] v1.7 : IMGKIT_6.02T10.01
+33:12.083 [683c9a90] [EVT] GetEvent <-- evSysModeChange(Decode)
+33:12.083 [401bd3dc] [API] SDL_Connect, sdlStatus = 0
+33:12.083 [683c9a90] [MOT] Setup for precise scene detect
+33:12.083 [401bd3dc] [SDL] SDL_IOControl: code=0x1, dwRet=0
+
+33:12.083 [683c9a90] SetupForSysMode: SYSMODE_DECODE
+33:12.083 [401bd3dc] <SAL_MemAllocClr 683c9ad0 20 bytes
+33:12.083 [683c9a90] >SE4500:StopSession
+33:12.083 [401bd3dc] >SAL_EventCreate
+33:12.083 [401bd3dc] <SAL_EventCreate pEv=683c9ad0 size=20
+33:12.083 [401bd3dc] <SAL_MemAllocClr 683c9ae8 20 bytes
+33:12.083 [401bd3dc] >SAL_EventCreate
+33:12.083 [683c9a90] <SE4500:StopSession
+33:12.083 [401bd3dc] <SAL_EventCreate pEv=683c9ae8 size=20
+33:12.083 [683c9a90] [ACQ] Setting frame consumers for mode change to SYSMODE_DECODE
+33:12.083 [401bd3dc] <SAL_MemAllocClr 683c9b00 24 bytes
+33:12.083 [401bd3dc] <SAL_MemAllocClr 683c9b20 20 bytes
+33:12.083 [401bd3dc] >SAL_EventCreate
+33:12.083 [401bd3dc] <SAL_EventCreate pEv=683c9b20 size=20
+33:12.083 [401bd3dc] <SAL_ThreadCreate: 683c9b38 SUCCESS (count=4, ptc=683c9b00, size=24)
+33:12.083 [401bd3dc] [API] SDLAPI_Attach: SUCCESS!!
+
+33:12.083 [401bd3dc] [SDL] SDL_IOControl: code=0x8
+
+33:12.083 [683c9b38] >ctl_thread [5] started
+33:12.083 [401bd3dc] [SDL] SDL_IOControl: code=0x8, dwRet=0
+
+33:12.083 [683c9b38] [API] uSDLThreadProc: calling WaitMultiple...
+33:12.083 [401bd3dc] [SDL] SDL_IOControl: code=0x8
+
+33:12.083 [683c9b38] >WaitForEvent[683c9b38] pWait=680b9320
+33:12.083 [401bd3dc] [SDL] SDL_IOControl: code=0x8, dwRet=0
+
+33:12.083 [683c9b38] WaitForEvent[683c9b38] waiting...
+33:12.098 [683c9a90] [SCN] issueEngineCmd-1: SE45OP_EXECSCRIPT [77] (3) to SE45xx = OK
+33:13.879 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:13.879 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:13.879 [67b5d608] handle_events: Wait ret=-1
+33:13.879 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:13.879 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:15.879 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:15.879 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:15.879 [67b5d608] handle_events: Wait ret=-1
+33:15.879 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:15.879 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:17.879 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:17.879 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:17.880 [67b5d608] handle_events: Wait ret=-1
+33:17.880 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:17.880 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:18.934 [401bd3dc] [SDL] SDL_IOControl: code=0x12
+
+33:18.934 [401bd3dc] [HST]RegisterBuffer[HostDecodeBuf] buf=69bc6008 len=12288
+33:18.934 [401bd3dc] [SDL] SDL_IOControl: code=0x12, dwRet=0
+
+33:18.934 [401bd3dc] [SDL] SDL_IOControl: code=0x16
+
+33:18.934 [401bd3dc] [SDL] SDL_IOControl: code=0x16, dwRet=0
+
+33:18.934 [401bd3dc] >SAL_EventReset pEv=680b9308
+33:18.934 [401bd3dc] <SAL_EventReset ret=1
+33:18.934 [401bd3dc] >SAL_EventReset pEv=680b9320
+33:18.934 [401bd3dc] <SAL_EventReset ret=1
+33:18.934 [401bd3dc] [SDL] SDL_IOControl: code=0x17
+
+33:18.935 [401bd3dc] [EVT] Post -> evTriggerPulled
+33:18.935 [401bd3dc] [SDL] SDL_IOControl: code=0x17, dwRet=0
+
+33:18.935 [683c9a90] [EVT] GetEvent <-- evTriggerPulled
+33:18.935 [683c9a90] [EVT] Post -> evSessionStart(trig)
+33:18.935 [683c9a90] >[SAL]TimerCreate 9900 ms
+33:18.935 [683c9a90] <SAL_MemAllocClr 66cc2360 36 bytes
+33:18.935 [683c9a90] <SAL_MemAllocClr 64fad8e0 20 bytes
+33:18.935 [683c9a90] >SAL_EventCreate
+33:18.935 [683c9a90] <SAL_EventCreate pEv=64fad8e0 size=20
+33:18.935 [683c9a90] <SAL_MemAllocClr 64fad8f8 24 bytes
+33:18.935 [683c9a90] <SAL_MemAllocClr 64fad918 20 bytes
+33:18.935 [683c9a90] >SAL_EventCreate
+33:18.935 [683c9a90] <SAL_EventCreate pEv=64fad918 size=20
+33:18.935 [683c9a90] <SAL_ThreadCreate: 64fad930 SUCCESS (count=5, ptc=64fad8f8, size=24)
+33:18.935 [64fad930] >ctl_thread [6] started
+33:18.935 [683c9a90] <[SAL]TimerCreate pTimer=66cc2360, size=36
+33:18.935 [64fad930] >[SAL]timer_thread[64fad930]: Starting pv=66cc2360, timeout=9900
+33:18.935 [64fad930] [SAL]timer_thread waiting 9900 ms...
+
+33:18.935 [64fad930] >WaitForEvent[64fad930] pWait=64fad8e0
+33:18.935 [64fad930] WaitForEvent[64fad930] waiting...
+33:18.935 [683c9a90] [EVT] GetEvent <-- evSessionStart(trig)
+33:18.935 [683c9a90] [SYS] sysState = SYSSTATE_ACTIVE
+33:18.935 [683c9a90] [MOT] Switching to fast-scene detect
+33:18.935 [683c9a90] [CAM] Starting acquisition for a decode session
+33:18.936 [683c9a90] IAL_StartSession(2) ...
+33:18.936 [683c9a90] >SE4500:StartSession fInSession=0
+33:18.936 [683c9a90] <SE4500:StartSession ret=0
+33:18.942 [683c9a90] 
+I2cLinux::Write: FAILED dwLen=3, ret=-1, errno=5
+33:18.942 [683c9a90] >[SAL]Sleep 0...
+33:18.942 [683c9a90] SE4500 Err: Unable to send command, retrying.
+33:18.955 [683c9a90] [SCN] issueEngineCmd-1: SE45OP_EXECSCRIPT [77] (2) to SE45xx = OK
+33:18.955 [683c9a90] [DEC]_StartSession: decCurrState(1), wasMotionInitiated(0)
+33:18.955 [683c9a90] [DEC]StartSession ret=0
+33:19.880 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:19.880 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:19.880 [67b5d608] handle_events: Wait ret=-1
+33:19.880 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:19.880 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:21.880 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:21.880 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:21.880 [67b5d608] handle_events: Wait ret=-1
+33:21.880 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:21.880 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:23.880 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:23.880 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:23.880 [67b5d608] handle_events: Wait ret=-1
+33:23.880 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:23.880 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:25.880 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:25.880 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:25.880 [67b5d608] handle_events: Wait ret=-1
+33:25.880 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:25.880 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:27.881 [67b5d608] WaitForEvent[67b5d608] wait rc=110, errno=0
+33:27.881 [67b5d608] <WaitForEvent[67b5d608] pWait=67b5d5b8, ret=-1
+33:27.881 [67b5d608] handle_events: Wait ret=-1
+33:27.881 [67b5d608] >WaitForEvent[67b5d608] pWait=67b5d5b8
+33:27.881 [67b5d608] WaitForEvent[67b5d608] waiting...
+33:28.836 [64fad930] WaitForEvent[64fad930] wait rc=110, errno=0
+33:28.836 [64fad930] <WaitForEvent[64fad930] pWait=64fad8e0, ret=-1
+33:28.836 [64fad930] [SAL]timer_thread: Wait ret = -1 after 9901 ms
+
+33:28.836 [64fad930] [SAL]timer_thread calling SDL EVT_PostEventPtr
+
+33:28.836 [64fad930] [EVT] Post -> evTimeout
+33:28.836 [64fad930] [SAL]timer_thread waiting -1 ms...
+
+33:28.836 [64fad930] >WaitForEvent[64fad930] pWait=64fad8e0
+33:28.836 [64fad930] WaitForEvent[64fad930] waiting...
+33:28.836 [683c9a90] [EVT] GetEvent <-- evTimeout
+33:28.836 [683c9a90] [SAL] OnSALTimeout doing callback for Event 2
+
+33:28.836 [683c9a90] TSM OnSessionTimeout
+33:28.836 [683c9a90] [EVT] Post -> evSessionStop(timeout)
+33:28.836 [683c9a90] [EVT] Post -> evSessionTimeout(Decode)
+33:28.836 [683c9a90] >[SAL] TimerDestroy 2
+33:28.836 [683c9a90] >SAL_EventSet pEv=64fad8e0
+33:28.836 [683c9a90] <SAL_EventSet ret=1
+33:28.836 [683c9a90] >SAL_ThreadJoin(64fad8f8, 2500) Thread=683c9a90
+33:28.836 [64fad930] WaitForEvent[64fad930] wait rc=0, errno=0
+33:28.836 [683c9a90] >WaitForEvent[683c9a90] pWait=64fad918
+33:28.836 [64fad930] <WaitForEvent[64fad930] pWait=64fad8e0, ret=0
+33:28.836 [683c9a90] WaitForEvent[683c9a90] waiting...
+33:28.836 [64fad930] [SAL]timer_thread: Wait ret = 0 after 0 ms
+
+33:28.836 [64fad930] [SAL]timer_thread: pTimer=66cc2360 EXIT
+33:28.836 [64fad930] >SAL_EventSet pEv=64fad918
+33:28.836 [64fad930] <SAL_EventSet ret=1
+33:28.836 [64fad930] <ctl_thread [6] exit
+33:28.836 [683c9a90] WaitForEvent[683c9a90] wait rc=0, errno=5
+33:28.836 [683c9a90] <WaitForEvent[683c9a90] pWait=64fad918, ret=0
+33:28.836 [683c9a90] <SAL_ThreadJoin: Thread=683c9a90 ret=0
+33:28.836 [683c9a90] >SAL_ThreadDestroy 64fad8f8
+33:28.836 [683c9a90] >SAL_EventDestroy pEv=64fad918
+33:28.836 [683c9a90]  SAL_EventDestroy pEv=64fad918, locked Mutex
+33:28.836 [683c9a90] >[SAL]Sleep 10...
+33:28.846 [683c9a90]  SAL_EventDestroy pEv=64fad918, destroying cond 64fad924...
+33:28.846 [683c9a90]  SAL_EventDestroy pEv=64fad918, pthread_cond_destroy rc=0
+33:28.846 [683c9a90] <SAL_MemFree 64fad918
+33:28.846 [683c9a90] <SAL_EventDestroy
+33:28.846 [683c9a90] <SAL_MemFree 64fad8f8
+33:28.846 [683c9a90] >SAL_EventDestroy pEv=64fad8e0
+33:28.846 [683c9a90]  SAL_EventDestroy pEv=64fad8e0, locked Mutex
+33:28.846 [683c9a90] >[SAL]Sleep 10...
+33:28.857 [683c9a90]  SAL_EventDestroy pEv=64fad8e0, destroying cond 64fad8ec...
+33:28.857 [683c9a90]  SAL_EventDestroy pEv=64fad8e0, pthread_cond_destroy rc=0
+33:28.857 [683c9a90] <SAL_MemFree 64fad8e0
+33:28.857 [683c9a90] <SAL_EventDestroy
+33:28.857 [683c9a90] <SAL_MemFree 66cc2360
+33:28.857 [683c9a90] [EVT] GetEvent <-- evSessionStop(timeout)
+33:28.857 [683c9a90] IAL_StopSession() ...
+33:28.857 [683c9a90] >SE4500:StopSession
+33:28.859 [683c9a90] <SE4500:StopSession
+33:28.872 [683c9a90] [SCN] issueEngineCmd-1: SE45OP_ARMACQUISITION [58] (0) to SE45xx = OK
+33:28.872 [683c9a90] [DEC]_StopSession decCurrState(2)
+33:28.872 [683c9a90] [SYS] evSessionStop
+33:28.872 [683c9a90] [EVT] Post -> evSysModeChange(Decode)
+33:28.872 [683c9a90] [EVT] GetEvent <-- evSessionTimeout(Decode)
+33:28.872 [683c9a90] [EVT] GetEvent <-- evSysModeChange(Decode)
+33:28.872 [683c9a90] [MOT] Setup for precise scene detect
+33:28.872 [683c9a90] SetupForSysMode: SYSMODE_DECODE
+33:28.872 [683c9a90] IAL_StopSession() ...
+33:28.872 [683c9a90] >SE4500:StopSession
+33:28.872 [683c9a90] <SE4500:StopSession
+33:28.872 [683c9a90] [ACQ] Setting frame consumers for mode change to SYSMODE_DECODE
+33:28.885 [683c9a90] [SCN] issueEngineCmd-1: SE45OP_EXECSCRIPT [77] (3) to SE45xx = OK
+33:28.885 [683c9a90] [API] IssueEvent id=9, data=1
+33:28.885 [683c9a90] [SDL] Event_CB: cbArg=694b0668, event=9, dwArg=1, flags=80
+33:28.885 [683c9a90] >SAL_EventSet pEv=680b9320
+33:28.885 [683c9a90] <SAL_EventSet ret=1
+33:28.885 [683c9b38] WaitForEvent[683c9b38] wait rc=0, errno=0
+33:28.885 [683c9b38] <WaitForEvent[683c9b38] pWait=680b9320, ret=0
+33:28.885 [683c9b38] [SDL] SDL_IOControl: code=0xe
+
+33:28.885 [683c9b38] [SDL] SDL_IOControl: code=0xe, dwRet=0
+
+33:28.885 [683c9b38] [API] uSDLThreadProc: waitstat=0, got Event flags=80
+33:28.885 [683c9b38] [API] jniEventCB: calling 64e31df5, flags=80, pctx=67b5d388

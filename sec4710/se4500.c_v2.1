@@ -1,0 +1,929 @@
+/*
+ * drivers/media/video/se4500.c
+ *
+ * Motorola SE4500 sensor driver
+ *
+ * Copyright (C) 2011 Motorola Solutions, Inc
+ * Author: Motorola
+ *
+ * This file is licensed under the terms of the GNU General Public License
+ * version 2. This program is licensed "as is" without any warranty of any
+ * kind, whether express or implied.
+ */
+
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/miscdevice.h>
+
+#include <linux/v4l2-mediabus.h>
+#include <media/v4l2-chip-ident.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
+#include <media/v4l2-ctrls.h>
+
+#include "se4500.h"
+
+#define SE4500_SENSOR_WIDTH_32B		((SE4500_SENSOR_WIDTH + 31) & ~31)
+
+/*
+ * struct se4500
+ *
+ *	Main structure for storage of sensor information
+ *
+ * @subdev:		V4L2 sub-device structure structure
+ * @format:		V4L2 media-bus frame format
+ * @rect:		V4L2 rectangle
+ * @pix:		V4L2 pixel format information structure
+ * @ctrls:		V4L2 control handler
+ * @pad:		Media entity pad structure
+ * @frameival:	Sub-dev pad frame interval
+ * @pdata:		Access functions and data for platform level information
+ * @ver:		SE4500 chip version TODO: does the SE4500 have this?
+ * @model:		Model number returned during detect
+ * @power:		Turn the interface ON or OFF
+ */
+
+struct se4500_dev
+{
+	struct v4l2_subdev				subdev;
+	struct v4l2_mbus_framefmt		format;
+	struct v4l2_rect				rect;
+	struct v4l2_pix_format			pix;
+	struct v4l2_ctrl_handler		ctrls;
+	struct media_pad				pad;
+	struct se4500_platform_data*	pdata;
+	atomic_t						open_excl;
+	int								ver;
+	char							model[SE45PARAM_MODELNO_LEN + 1];
+	unsigned int					power;
+};
+
+// Macro to get our se4500_dev struct pointer from a v4l2_subdev structure
+#define to_se4500(sd)	container_of(sd, struct se4500_dev, subdev)
+
+/*
+ * struct se4500_fmt
+ *
+ * @mbus_code:	associated media bus code
+ * @fmt:		format descriptor
+ */
+
+struct se4500_fmt
+{
+	unsigned int		mbus_code;
+	struct v4l2_fmtdesc	fmt;
+};
+
+/*
+ * Pointer to our allocated device structure so that our 'misc' device can call our I2C client
+ */
+static struct se4500_dev*	_pSE4500Dev	= NULL;
+
+/*
+ * List of image formats supported by the SE4500.
+ * The SE4500 supports 8 bit grey-scale only.
+ */
+
+static const struct se4500_fmt se4500_fmt_list[] =
+{
+	{
+		.mbus_code = V4L2_MBUS_FMT_Y8_1X8,
+		.fmt =
+		{
+			.index		 = 0,
+			.type		 = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+			.flags		 = 0,
+			.description = "8-bit Grey-Scale Format",
+			.pixelformat = V4L2_PIX_FMT_GREY,
+		},
+	}
+};
+
+/*
+ * se4500_read - Read a response from the SE4500 device
+ * @pClient:		i2c driver client structure
+ * @data:			pointer to buffer to receive response
+ * @data_length:	length of data to be read
+ *
+ * Read a response from the SE4500 device.
+ * The response is stored in the buffer pointed to by 'data'.
+ * Returns zero if successful, or non-zero otherwise.
+ */
+static int se4500_read(struct i2c_client* pClient, u8* data, int data_length)
+{
+	struct i2c_msg	msg[1];
+	int				err;
+
+	msg->addr	= pClient->addr;
+	msg->flags	= I2C_M_RD;
+	msg->len	= data_length;
+	msg->buf	= data;
+	err			= i2c_transfer(pClient->adapter, msg, 1);
+	if ( err >= 0 )
+	{
+		err = 0;	// Success
+	}
+	return(err);
+}
+
+/*
+ * se4500_write - Write a command to the SE4500 device
+ * @pClient:		i2c driver client structure
+ * @data:			pointer to data to write
+ * @data_length:	length of data to write
+ *
+ * Write a command to the SE4500 device.
+ * Returns zero if successful, or non-zero otherwise.
+ */
+static int se4500_write(struct i2c_client* pClient, u8* data, int data_length)
+{
+	struct i2c_msg	msg[1];
+	int				err;
+
+	msg->addr	= pClient->addr;
+	msg->flags	= 0;
+	msg->len	= data_length;
+	msg->buf	= data;
+	err			= i2c_transfer(pClient->adapter, msg, 1);
+	if ( err >= 0 )
+	{
+		err = 0;	// Non-negative indicates success
+	}
+
+	return(err);
+}
+
+/*
+ * se4500_command - Send a command to the SE4500 device and wait for a response
+ * @pClient:		i2c driver client structure
+ * @bCmd:			SE4500 command byte
+ * @pParam:			buffer with command parameters
+ * @num_param:		number of parameter bytes
+ * @pResp:			buffer for response
+ * @resp_len:		expected response length
+ *
+ * Sends a command and optional parameters to the SE4500 via I2C and waits
+ * for a response.
+ * Returns the number of response bytes receive or a negative error code
+ */
+static int se4500_command(struct i2c_client* pClient, u8 bCmd, u8* pParam, int num_param, u8* pResp, int resp_len)
+{
+	int	retVal;
+	int	iIdx;
+	int	iCmdLen;
+	u8	abCmd[SE45_MAX_CMD_LEN];
+	u8	bCkSum;
+	u8	bTmp;
+
+	// Make sure command, params and checksum will fit in buffer
+	if ( (num_param >= (sizeof(abCmd) - 2)) || (num_param < 0) )
+	{
+		v4l_err(pClient, "se4500_command: invalid param count: %d\n", num_param);
+		return(-EINVAL);
+	}
+
+	// Build command and calculate checksum
+	abCmd[0] = bCkSum = bCmd;
+	for ( iIdx = 0; iIdx < num_param; )
+	{
+		bTmp = pParam[iIdx++];
+		abCmd[iIdx] = bTmp;
+		bCkSum += bTmp;
+	}
+	abCmd[++iIdx] = -bCkSum;	// Store checksum
+
+	iCmdLen = num_param + 2;
+	retVal = -EIO;
+
+	//v4l_info(pClient, "se4500_command: %d %02X:%02X:%02X\n", iCmdLen, abCmd[0], abCmd[1], abCmd[2]);
+
+	// Try up to 3 times to send the command
+	for ( iIdx = 0; iIdx < 3; ++iIdx )
+	{
+		retVal = se4500_write(pClient, abCmd, iCmdLen);
+		if ( 0 == retVal )
+		{
+			// Command successfully sent
+			// Try up to 3 times to read the response
+			for ( iIdx = 0; iIdx < 3; ++iIdx )
+			{
+				msleep(5);
+				retVal = se4500_read(pClient, pResp, resp_len);
+				if ( 0 == retVal )
+				{
+					// TODO: Should we check for ACK?
+					//v4l_info(pClient, "se4500_command: resp=%d %02X:%02X\n", retVal, pResp[0], pResp[1]);
+					return(resp_len);
+				}
+			}
+			v4l_err(pClient, "Read %02X response failed, err=%d\n", bCmd, retVal);
+			return(retVal);
+		}
+	}
+	v4l_err(pClient, "Write %02X failed, err=%d\n", bCmd, retVal);
+	return(retVal);
+}
+
+/*
+ * se4500_configure - Configure the SE4500 for the specified image mode
+ * @pSubdev:	pointer to standard V4L2 device structure
+ *
+ * Configure the SE4500 for a specified image size, pixel format, and frame
+ * period.  xclk is the frequency (in Hz) of the xclk input to the SE4500.
+ * fper is the frame period (in seconds) expressed as a fraction.
+ * Returns zero if successful, or non-zero otherwise.
+ * The actual frame period is returned in fper.
+ */
+static int se4500_configure(struct v4l2_subdev* pSubdev)
+{
+#if defined(SE4500_TODO)
+
+
+#else
+
+	return(0);
+
+#endif
+}
+
+/*
+ * se4500_detect - Detect if an SE4500 is present, and if so get the model number
+ * @pSubdev:	pointer to the V4L2 sub-device driver structure
+ *
+ * Detect if an SE4500 is present
+ * Returns a negative error number if no device is detected, or 0x99
+ * if the model number is successfully read.
+ */
+static int se4500_detect(struct v4l2_subdev* pSubdev)
+{
+	struct se4500_dev*	pSE4500	= to_se4500(pSubdev);
+	struct i2c_client*	pClient = v4l2_get_subdevdata(pSubdev);
+	int	retVal;
+	int	numParam;
+	u8	abParam[2];
+	u8	abResp[SE45PARAM_MODELNO_LEN + 4];
+
+	// Start and stop acquisition as a workaround for the AIM not working first time problem
+	numParam = 1;
+	abParam[0] = 1;
+	// Uncomment the following to get a visual confirmation that I2C is working at startup
+	// retVal = se4500_command(pClient, SE45OP_ILLUMDURINGEXPOSURE, abParam, numParam, abResp, 2);
+	retVal = se4500_command(pClient, SE45OP_ARMACQUISITION, abParam, numParam, abResp, 2);
+	abParam[0] = 0;
+	retVal = se4500_command(pClient, SE45OP_ARMACQUISITION, abParam, numParam, abResp, 2);
+
+	// Try to get the model number from the sensor
+	numParam = 2;
+	abParam[0] = (SE45PARAM_MODELNO & 0x00FF) >> 0;
+	abParam[1] = (SE45PARAM_MODELNO & 0xFF00) >> 8;
+	retVal = se4500_command(pClient, SE45OP_GETPARAM, abParam, numParam, abResp, sizeof(abResp));
+	if ( retVal > 0 )
+	{
+		memcpy(pSE4500->model, abResp + 4, sizeof(pSE4500->model) - 1);
+	}
+	else
+	{
+		u8	abSN[SE45PARAM_SERIALNO_LEN + 5];
+
+		abParam[0] = (SE45PARAM_SERIALNO & 0x00FF) >> 0;
+		abParam[1] = (SE45PARAM_SERIALNO & 0xFF00) >> 8;
+		memset(abSN, 0, sizeof(abSN));
+		retVal = se4500_command(pClient, SE45OP_GETPARAM, abParam, numParam, abSN, sizeof(abSN) - 1);
+		if ( retVal > 0 )
+		{
+			v4l_err(pClient, "SE4500 S/N=%s\n", (char*) abSN);
+		}
+	}
+
+	return(0x98);//return(-EIO);
+}
+
+/* --------------------------------------------------------------------------
+ * SE4500 configuration functions
+ */
+
+/* --------------------------------------------------------------------------
+ * V4L2 subdev core operations
+ */
+
+static int se4500_g_chip_ident(struct v4l2_subdev* pSubdev, struct v4l2_dbg_chip_ident* pChip)
+{
+	struct i2c_client*	pClient = v4l2_get_subdevdata(pSubdev);
+
+	return(v4l2_chip_ident_i2c_client(pClient, pChip, /*V4L2_IDENT_SE4500*/ 4, 0));
+}
+
+/*
+ * se4500_dev_init - sensor init, tries to detect the sensor
+ * @pSubdev:	pointer to standard V4L2 subdev structure
+ */
+
+static int se4500_dev_init(struct v4l2_subdev* pSubdev)
+{
+	struct se4500_dev*	pSE4500	= to_se4500(pSubdev);
+	struct i2c_client*	pClient	= v4l2_get_subdevdata(pSubdev);
+	int					retVal;
+
+	retVal = pSE4500->pdata->s_power(pSubdev, 1);
+	if ( !retVal )
+	{
+		retVal = se4500_detect(pSubdev);
+		if ( retVal < 0 )
+		{
+			v4l_err(pClient, "Unable to detect" SE4500_MODULE_NAME "sensor\n");
+		}
+		else
+		{
+			pSE4500->ver = retVal;
+			v4l_info(pClient, SE4500_MODULE_NAME " model number: %s detected\n", pSE4500->model);
+			retVal = 0;
+		}
+		pSE4500->pdata->s_power(pSubdev, 0);
+	}
+	return(retVal);
+}
+
+/*
+ * se4500_s_config - set the platform data for future use
+ * @pSubdev:		pointer to standard V4L2 subdev structure
+ * @irq:			not used?
+ * @platform_data:	sensor platform_data
+ */
+static int se4500_s_config(struct v4l2_subdev* pSubdev, int irq, void* pPlatform_data)
+{
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+
+	if ( pPlatform_data == NULL )
+		return(-ENODEV);
+
+	pSE4500->pdata = pPlatform_data;
+
+	return(se4500_dev_init(pSubdev));
+}
+
+/*
+ * se4500_s_power - V4L2 sensor interface handler for s_power
+ * @pSubdev:	pointer to standard V4L2 device structure
+ * @on:			power state to which device is to be set
+ *
+ * Sets devices power state to requrested state, if possible.
+ */
+static int se4500_s_power(struct v4l2_subdev* pSubdev, int on)
+{
+	struct se4500_dev*	pSE4500	= to_se4500(pSubdev);
+	struct i2c_client*	pClient	= v4l2_get_subdevdata(pSubdev);
+	int					retVal;
+
+	retVal	= 0;			// Clear error return in case state is not being changed
+	on		= on ? 1 : 0;	// Make sure requested state is either 0 or 1
+
+	// Check for change in state being requested
+	if ( on != pSE4500->power )
+	{
+		retVal = pSE4500->pdata->s_power(pSubdev, on);	// Change power state
+		if ( !retVal )
+		{
+			if ( on )
+			{
+				retVal = se4500_configure(pSubdev);	// Power on successful, configure sensor
+				if ( retVal )
+				{
+					pSE4500->pdata->s_power(pSubdev, 0);	// Configure failed, turn power off
+				}
+			}
+		}
+	}
+
+	// If error, log it, else update current power state
+	if ( retVal )
+		v4l_err(pClient, "Unable to set target power state\n");
+	else
+		pSE4500->power = on;
+
+	return(retVal);
+}
+
+/* --------------------------------------------------------------------------
+ * V4L2 subdev file operations
+ */
+static int se4500_open(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH)
+{
+	struct v4l2_mbus_framefmt*	pFormat;
+	struct v4l2_rect*			pCrop;
+	//struct i2c_client*		pClient	= v4l2_get_subdevdata(pSubdev);
+
+	/*
+	 * Default configuration -
+	 *	Resolution: 752 x 480
+	 *	Format: GREY
+	 *	crop = window
+	 */
+	pCrop				= v4l2_subdev_get_try_crop(pFH, 0);
+	pCrop->left			= 0;
+	pCrop->top			= 0;
+	pCrop->width		= SE4500_SENSOR_WIDTH_32B;
+	pCrop->height		= SE4500_SENSOR_HEIGHT;
+
+	pFormat				= v4l2_subdev_get_try_format(pFH, 0);
+	pFormat->code		= V4L2_MBUS_FMT_UYVY8_2X8;
+	pFormat->width		= SE4500_SENSOR_WIDTH_32B;
+	pFormat->height		= SE4500_SENSOR_HEIGHT;
+	pFormat->field		= V4L2_FIELD_NONE;
+	pFormat->colorspace	= V4L2_COLORSPACE_JPEG;
+
+	//v4l_err(pClient, "SE4500 I2C client opened\n");
+
+	return(0);
+}
+/*
+	u8	rsp[4];
+	u8	data[6 * 3];
+	int	retVal;
+	int	cnt;
+	struct i2c_client*	pClient = v4l2_get_subdevdata(pSubdev);
+
+	data[0] = SE4500_CMD_ACQUISITION_MODE;
+	data[1] = 1;
+	data[3] = SE4500_CMD_ILLUM_DURING_EXP;
+	data[4] = 1;
+	data[6] = SE4500_CMD_AIM;
+	data[7] = 1;
+	data[9] = SE4500_CMD_IMAGE_CAPTURE_MODE;
+	data[10] = 0;
+	data[12] = SE4500_CMD_ACQUISITION;
+	data[13] = 1;
+	data[15] = SE4500_CMD_ACQUISITION;
+	data[16] = 0;
+
+	for ( cnt = 0; cnt < 15; cnt += 3 )
+	{
+		data[cnt + 2] = 0x100 - (data[cnt] + data[cnt + 1]);
+		retVal = se4500_write(pClient, data + cnt, 3);
+		if ( 0 == retVal )
+		{
+			retVal = se4500_read(pClient, rsp, 2);
+			if ( 0 == retVal )
+			{
+				v4l_err(pClient, "Write %02X returned %02X:%02X\n", data[cnt], rsp[0], rsp[1]);
+			}
+			else
+			{
+				v4l_err(pClient, "Read %02X response failed, err=%d\n", data[cnt], retVal);
+			}
+		}
+		else
+		{
+			v4l_err(pClient, "Write %02X failed, err=%d\n", data[cnt], retVal);
+		}
+	}
+	return(0x100);
+
+*/
+/* --------------------------------------------------------------------------
+ * V4L2 subdev video operations
+ */
+
+static int se4500_s_stream(struct v4l2_subdev* pSubdev, int streaming)
+{
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+	struct i2c_client*	pClient	= v4l2_get_subdevdata(pSubdev);
+
+	// If the 'misc' device is open, do not attempt to enable or disable acquisition
+	if ( atomic_inc_return(&pSE4500->open_excl) == 1 )
+	{
+		int	retVal;
+		int	numParam;
+		u8	abResp[2];
+		u8	abParam[1];
+
+		numParam = 1;
+		if ( streaming )
+		{
+			// If streaming is being turned on, set the acquisition mode for imaging and enable illumination
+			abParam[0] = ACQMODE_IMAGE;
+			retVal = se4500_command(pClient, SE45OP_ACQUISITIONMODE, abParam, numParam, abResp, sizeof(abResp));
+			abParam[0] = 1;
+			retVal = se4500_command(pClient, SE45OP_ILLUMDURINGEXPOSURE, abParam, numParam, abResp, sizeof(abResp));
+		}
+		// Turn acquisition on or off
+		abParam[0] = streaming ? 1 : 0;
+		retVal = se4500_command(pClient, SE45OP_ARMACQUISITION, abParam, numParam, abResp, sizeof(abResp));
+
+		//v4l_info(pClient, "SE4500 set stream %s called\n", streaming ? "on" : "off");
+	}
+	atomic_dec(&pSE4500->open_excl);
+
+	return(0);
+}
+
+/* --------------------------------------------------------------------------
+ * V4L2 subdev pad operations
+ */
+
+/*
+ * se4500_enum_mbus_code - V4L2 sensor interface handler for pad_ops
+ * @subdev: pointer to standard V4L2 sub-device structure
+ * @qctrl: standard V4L2 VIDIOC_QUERYCTRL ioctl structure
+ *
+ * If the requested control is supported, returns the control information
+ * from the video_control[] array.  Otherwise, returns -EINVAL if the
+ * control is not supported.
+ */
+static int se4500_enum_mbus_code(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH, struct v4l2_subdev_mbus_code_enum* pCode)
+{
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+
+	if ( pCode->index >= ARRAY_SIZE(se4500_fmt_list) )
+		return(-EINVAL);
+
+	pCode->code = pSE4500->format.code;
+
+	return(0);
+}
+
+static int se4500_enum_frame_size(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH, struct v4l2_subdev_frame_size_enum* pFSE)
+{
+	int		idx;
+	int		ret;
+
+	// Is requested media-bus format/pixelformat not found on sensor?
+	ret = -EINVAL;
+	for ( idx = 0; idx < ARRAY_SIZE(se4500_fmt_list); ++idx )
+	{
+		if ( pFSE->code == se4500_fmt_list[idx].mbus_code )
+		{
+			// SE4500 only supports 752 x 480
+			pFSE->min_width		= pFSE->max_width	= SE4500_SENSOR_WIDTH_32B;
+			pFSE->min_height	= pFSE->max_height	= SE4500_SENSOR_HEIGHT;
+			ret = 0;
+			break;
+		}
+	}
+	return(ret);
+}
+
+static int se4500_get_pad_format(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH, struct v4l2_subdev_format* pFmt)
+{
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+
+	pFmt->format = pSE4500->format;
+
+	return(0);
+}
+
+static int se4500_set_pad_format(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH, struct v4l2_subdev_format* pFmt)
+{
+	int					idx;
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+	struct i2c_client*	pClient	= v4l2_get_subdevdata(pSubdev);
+
+	for ( idx = 0; idx < ARRAY_SIZE(se4500_fmt_list); ++idx )
+	{
+		if ( pFmt->format.code == se4500_fmt_list[idx].mbus_code )
+		{
+			/*
+			 * Only 752 x 480 resolution supported
+			 */
+			pFmt->format.width		= SE4500_SENSOR_WIDTH_32B;
+			pFmt->format.height		= SE4500_SENSOR_HEIGHT;
+			pFmt->format.field		= V4L2_FIELD_NONE;
+			pFmt->format.colorspace	= V4L2_COLORSPACE_JPEG;
+
+			pSE4500->format			= pFmt->format;
+
+			v4l_err(pClient, "SE4500 I2C client : set_pad_format success\n");
+	
+			return(0);
+		}
+	}
+	v4l_err(pClient, "SE4500 I2C client : set_pad_format ERROR!\n");
+	return(-EINVAL);
+}
+
+static int se4500_get_crop(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH, struct v4l2_subdev_crop* pCrop)
+{
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+
+	pCrop->rect = pSE4500->rect;
+	return(0);
+}
+
+static int se4500_set_crop(struct v4l2_subdev* pSubdev, struct v4l2_subdev_fh* pFH, struct v4l2_subdev_crop* pCrop)
+{
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+	struct v4l2_rect	rect;
+
+	/*
+	 * Only 752 x 480 resolution/window is supported
+	 */
+	rect.left	= 0;
+	rect.top	= 0;
+	rect.width	= SE4500_SENSOR_WIDTH_32B;
+	rect.height	= SE4500_SENSOR_HEIGHT;
+
+	pSE4500->rect	= rect;
+	pCrop->rect		= rect;
+
+	return(0);
+}
+
+/* --------------------------------------------------------------------------
+ * 'misc' device file operations
+ */
+
+static int se4500_misc_open(struct inode* pINode, struct file* pFile)
+{
+	if ( atomic_inc_return(&_pSE4500Dev->open_excl) != 1 )
+	{
+		atomic_dec(&_pSE4500Dev->open_excl);
+		return -EBUSY;
+	}
+	pFile->private_data = _pSE4500Dev;
+	return(0);
+}
+
+static long se4500_misc_ioctl(struct file* pFile, unsigned int uiCmd, unsigned long ulArg)
+{
+	struct se4500_dev*			pSE4500;
+	struct i2c_client*			pClient;
+	struct i2c_rdwr_ioctl_data	I2CData;
+	struct i2c_msg				I2CMsg;
+	u8 __user*					pData;
+	long						lRetVal;
+
+	pSE4500 = pFile->private_data;
+
+	if ( (pSE4500 == NULL) || (uiCmd != I2C_RDWR) || !ulArg )
+	{
+		return(-EINVAL);
+	}
+
+	pClient = v4l2_get_subdevdata(&pSE4500->subdev);
+
+	// Copy data structure argument from user-space
+	if ( copy_from_user(&I2CData, (struct i2c_rdwr_ioctl_data __user*) ulArg, sizeof(I2CData)) )
+	{
+		return(-EFAULT);
+	}
+
+	// Only allow one message at a time
+	if ( I2CData.nmsgs != 1 )
+	{
+		return(-EINVAL);
+	}
+
+	// Copy the message structure from user-space
+	if ( copy_from_user(&I2CMsg, I2CData.msgs, sizeof(struct i2c_msg)) )
+	{
+		return(-EFAULT);
+	}
+
+	lRetVal = 0;
+	// Only allow transfers to the SE4500, limit the size of the message and don't allow received length changes
+	if ( (I2CMsg.addr != SE4500_I2C_ADDR) || (I2CMsg.len > 256) || (I2CMsg.flags & I2C_M_RECV_LEN) )
+	{
+		return(-EINVAL);
+	}
+
+	// Map the data buffer from user-space
+	pData = (u8 __user*) I2CMsg.buf;
+	I2CMsg.buf = memdup_user(pData, I2CMsg.len);
+	if ( IS_ERR(I2CMsg.buf) )
+	{
+		return(PTR_ERR(I2CMsg.buf));
+	}
+
+	// Perform the I2C transfer
+	lRetVal = i2c_transfer(pClient->adapter, &I2CMsg, 1);
+	if ( (lRetVal >= 0) && (I2CMsg.flags & I2C_M_RD) )
+	{
+		// Successful read, copy data to user-space
+		if ( copy_to_user(pData, I2CMsg.buf, I2CMsg.len) )
+		{
+			lRetVal = -EFAULT;
+		}
+	}
+	kfree(I2CMsg.buf);
+	return(lRetVal);
+}
+
+static int se4500_misc_release(struct inode* pINode, struct file* pFile)
+{
+	atomic_dec(&_pSE4500Dev->open_excl);
+	return(0);
+}
+
+/*
+ * The following structs define the entry points into this driver.
+ *
+ * se4500_ops contains the categories of functions that we implement.
+ * Each category struct contains pointers to the functions implemented for that category.
+ */
+
+static const struct v4l2_subdev_core_ops se4500_core_ops =
+{
+	.g_chip_ident	= se4500_g_chip_ident,
+	//.s_config		= se4500_s_config,
+	.s_power		= se4500_s_power,
+};
+
+#if 0
+static struct v4l2_subdev_file_ops se4500_subdev_file_ops =
+{
+	.open			= se4500_open,
+};
+#endif
+static const struct v4l2_subdev_video_ops se4500_video_ops =
+{
+	.s_stream		= se4500_s_stream,
+};
+
+static const struct v4l2_subdev_pad_ops se4500_pad_ops =
+{
+	.enum_mbus_code	= se4500_enum_mbus_code,
+	.enum_frame_size= se4500_enum_frame_size,
+	.get_fmt		= se4500_get_pad_format,
+	.set_fmt		= se4500_set_pad_format,
+	.get_crop		= se4500_get_crop,
+	.set_crop		= se4500_set_crop,
+};
+
+static const struct v4l2_subdev_ops se4500_ops =
+{
+	.core			= &se4500_core_ops,
+	//.file			= &se4500_subdev_file_ops,
+	.video			= &se4500_video_ops,
+	.pad			= &se4500_pad_ops,
+};
+
+static const struct file_operations se4500_misc_fops =
+{
+	.owner			= THIS_MODULE,
+	.unlocked_ioctl	= se4500_misc_ioctl,
+	.open			= se4500_misc_open,
+	.release		= se4500_misc_release,
+};
+
+static struct miscdevice se4500_misc_device =
+{
+	.minor			= MISC_DYNAMIC_MINOR,
+	.name			= SE4500_MISC_NAME,
+	.fops			= &se4500_misc_fops,
+};
+
+/*
+ * se4500_probe - sensor driver i2c probe handler
+ * @pClient:	i2c driver client device structure
+ *
+ * Register sensor as an I2C client device, a V4L2 device and a misc device.
+ *
+ * This function is called as a result of calling i2c_add_driver() during se4500_init().
+ * i2c_add_driver() calls i2c_register_driver() which calls driver_register().
+ * driver_register() calls bus_add_driver() which allocates a driver_private structure
+ * and stores it in se4500_i2c_driver.driver.p
+ */
+static int se4500_probe(struct i2c_client* pClient, const struct i2c_device_id *id)
+{
+	struct se4500_dev*	pSE4500;
+	int					retVal;
+
+	// Check if the I2C adapter supports the needed features TODO: Does SE4500 need this feature
+	if ( !i2c_check_functionality(pClient->adapter, I2C_FUNC_SMBUS_BYTE_DATA) )
+	{
+		v4l_err(pClient, "SE4500: I2C Adapter doesn't support I2C_FUNC_SMBUS_WORD\n");
+		return(-EIO);
+	}
+#if 0
+	if ( !pClient->dev.platform_data )
+	{
+		v4l_err(pClient, "No platform data!\n");
+		return(-ENODEV);
+	}
+#endif
+	pSE4500 = kzalloc(sizeof(*pSE4500), GFP_KERNEL);
+	if ( pSE4500 == NULL )
+	{
+		v4l_err(pClient, "Could not allocate memory!\n");
+		return(-ENOMEM);
+	}
+
+	//pSE4500->pdata = pClient->dev.platform_data;
+
+	/*
+	 * Default configuration -
+	 *	Resolution:	752 x 480
+	 *	Format:		GREY
+	 *	Crop:		Window
+	 */
+
+	pSE4500->rect.left			= 0;
+	pSE4500->rect.top			= 0;
+	pSE4500->rect.width			= SE4500_SENSOR_WIDTH_32B;
+	pSE4500->rect.height		= SE4500_SENSOR_HEIGHT;
+
+	pSE4500->format.code		= se4500_fmt_list[0].mbus_code;		// V4L2_MBUS_FMT_Y8_1X8
+	pSE4500->format.width		= SE4500_SENSOR_WIDTH_32B;
+	pSE4500->format.height		= SE4500_SENSOR_HEIGHT;
+	pSE4500->format.field		= V4L2_FIELD_NONE;
+	pSE4500->format.colorspace	= V4L2_COLORSPACE_JPEG;				// TODO: Should this be something else? V4L2_COLORSPACE_SRGB?
+
+	v4l2_i2c_subdev_init(&pSE4500->subdev, pClient, &se4500_ops);
+
+	pSE4500->subdev.flags  |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+//	pSE4500->pad.flags		= MEDIA_PAD_FLAG_OUTPUT;
+
+	retVal = media_entity_init(&pSE4500->subdev.entity, 1, &pSE4500->pad, 0);
+
+	if ( retVal < 0 )
+	{
+		kfree(pSE4500);
+	}
+	else
+	{
+		// Save the pointer to our device structure for use by the 'misc' device
+		_pSE4500Dev = pSE4500;
+
+		// Initialize exclusive open lock
+		atomic_set(&pSE4500->open_excl, 0);
+
+		// Register as a 'misc' device
+		// If it fails, we just won't have I2C access from VM's but we will still work as a camera
+		misc_register(&se4500_misc_device);
+	}
+
+	return(retVal);
+}
+
+/*
+ * se4500_remove - sensor driver i2c remove handler
+ * @pClient:	i2c driver client device structure
+ *
+ * Unregister sensor as an i2c client device and V4L2 device.  Complement of se4500_probe().
+ */
+static int __exit se4500_remove(struct i2c_client* pClient)
+{
+	struct v4l2_subdev*	pSubdev = i2c_get_clientdata(pClient);
+	struct se4500_dev*	pSE4500 = to_se4500(pSubdev);
+
+	misc_deregister(&se4500_misc_device);
+	v4l2_device_unregister_subdev(&pSE4500->subdev);
+	media_entity_cleanup(&pSE4500->subdev.entity);
+	_pSE4500Dev = NULL;
+	kfree(pSE4500);
+
+	return(0);
+}
+
+static const struct i2c_device_id se4500_id[] =
+{
+	{ SE4500_MODULE_NAME, 0 },
+	{ }
+};
+
+MODULE_DEVICE_TABLE(i2c, se4500_id);
+
+static struct i2c_driver se4500_i2c_driver =
+{
+	.driver =
+	{
+		.name	= SE4500_MODULE_NAME,
+		.owner	= THIS_MODULE,				// Also filled in by i2c_register_driver() (why the redundancy?)
+		.bus	= NULL,						// Filled in with a pointer to i2c-core's global bus_type struct
+											// by i2c_add_driver() via i2c_register_driver()
+	},
+	.probe	  = se4500_probe,
+	.remove	  = __exit_p(se4500_remove),	// __exit_p = if defined(MODULE) then se4500_remove else NULL
+	.id_table = se4500_id,
+};
+
+/*
+ * se4500_init - sensor driver module_init handler
+ *
+ * Registers driver as an i2c client driver.  Returns 0 on success,
+ * error code otherwise.
+ */
+static int __init se4500_init(void)
+{
+	return(i2c_add_driver(&se4500_i2c_driver));
+}
+
+/*
+ * se4500_cleanup - sensor driver module_exit handler
+ *
+ * Unregisters/deletes driver as an i2c client driver.
+ * Complement of se4500_init.
+ */
+static void __exit se4500_cleanup(void)
+{
+	i2c_del_driver(&se4500_i2c_driver);
+}
+
+module_init(se4500_init);
+module_exit(se4500_cleanup);
+
+MODULE_AUTHOR("Motorola Solutions");
+MODULE_DESCRIPTION("SE4500 camera sensor driver");
+MODULE_LICENSE("GPL");
+

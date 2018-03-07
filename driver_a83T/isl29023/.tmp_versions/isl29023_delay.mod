@@ -1,0 +1,2 @@
+/home/jz/test/esd_learn/driver_a83T/isl29023/isl29023_delay.ko
+/home/jz/test/esd_learn/driver_a83T/isl29023/isl29023_delay.o

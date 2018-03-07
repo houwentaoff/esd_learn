@@ -1,0 +1,1 @@
+cmd_/home/jz/test/esd_learn/usb_net/jp1081_android.ko := /home/jz/tools/arm-2007q3/bin/arm-none-linux-gnueabi-ld -EL -r  -T /home/jz/myandroid/kernel_imx/scripts/module-common.lds --build-id  -o /home/jz/test/esd_learn/usb_net/jp1081_android.ko /home/jz/test/esd_learn/usb_net/jp1081_android.o /home/jz/test/esd_learn/usb_net/jp1081_android.mod.o

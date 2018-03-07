@@ -1,0 +1,1 @@
+cmd_/home/jz/test/esd_learn/sec4710/se4500.ko := /home/jz/tools/arm-2007q3/bin/arm-none-linux-gnueabi-ld -EL -r  -T /home/jz/nfs_artillery/kernel_imx/scripts/module-common.lds --build-id  -o /home/jz/test/esd_learn/sec4710/se4500.ko /home/jz/test/esd_learn/sec4710/se4500.o /home/jz/test/esd_learn/sec4710/se4500.mod.o

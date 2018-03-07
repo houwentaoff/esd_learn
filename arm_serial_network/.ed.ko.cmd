@@ -1,0 +1,1 @@
+cmd_/home/jz/test/arm_serial_network/ed.ko := /home/jz/tools/arm-2007q3/bin/arm-none-linux-gnueabi-ld -EL -r  -T /home/jz/myandroid/kernel_imx/scripts/module-common.lds --build-id  -o /home/jz/test/arm_serial_network/ed.ko /home/jz/test/arm_serial_network/ed.o /home/jz/test/arm_serial_network/ed.mod.o

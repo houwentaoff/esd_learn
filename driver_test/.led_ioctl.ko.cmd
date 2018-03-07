@@ -1,0 +1,1 @@
+cmd_/home/jz/test/esd_learn/driver_test/led_ioctl.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.2.0-29-generic/scripts/module-common.lds --build-id  -o /home/jz/test/esd_learn/driver_test/led_ioctl.ko /home/jz/test/esd_learn/driver_test/led_ioctl.o /home/jz/test/esd_learn/driver_test/led_ioctl.mod.o
