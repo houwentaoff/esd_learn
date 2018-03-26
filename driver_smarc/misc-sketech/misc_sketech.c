@@ -16,7 +16,6 @@
 #include <asm/uaccess.h>
 
 #define DRIVER_NAME "AAA_BBB"
-#define DEVICE_NAME "AAA_BBB"
 #define MISC_NAME   "AAA_BBB"
 
 #define MISC_IOC_MAGIC 'M'
@@ -54,27 +53,20 @@ static struct miscdevice AAA_BBB_misc_device = {
 
 
 static int AAA_BBB_probe(struct platform_device *pdev){
-	struct device_node *np = pdev->dev.of_node;
 	struct AAA_BBB_data *data;
 	
-	if(np == NULL){
-		return 0;//void the probe exec twice
-	}
+	printk("bshui AAA_BBB_probe-------\n");
 	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
 	if(data == NULL)
 		return -ENOMEM;
 
 	misc_register(&AAA_BBB_misc_device);
 
-	printk("bshui AAA_BBB_probe-------\n");
 	return 0;
 }
 
 static int AAA_BBB_remove(struct platform_device *pdev){
-	struct device_node *np = pdev->dev.of_node;
-	if(np == NULL){
-		return 0; 
-	}
+
 	misc_deregister(&AAA_BBB_misc_device);
 	printk("bshui AAA_BBB_remove\n");
 	return 0;
@@ -90,13 +82,9 @@ static int AAA_BBB_resume(struct platform_device *pdev)
 	return 0;
 }
 
-static void AAA_BBB_device_release(struct device *pdev){
-
-	return ;
-}
 
 static struct of_device_id AAA_dt_ids[] = {
-	{ .compatible = "flash-leds"},
+	{ .compatible = "ad_hx710"},
 	{}
 };
 
@@ -115,22 +103,14 @@ static struct platform_driver AAA_BBB_driver = {
 };
 
 
-static struct platform_device AAA_BBB_device = {
-	.name = DEVICE_NAME,
-	.dev = {
-		.release = AAA_BBB_device_release,
-	}
-};
 
 static int __init AAA_BBB_init(void){
-	platform_device_register(&AAA_BBB_device);
 	platform_driver_register(&AAA_BBB_driver);
 	return 0;
 }
 
 static void __exit AAA_BBB_exit(void){
 	platform_driver_unregister(&AAA_BBB_driver);
-	platform_device_unregister(&AAA_BBB_device);
 }
 
 module_init(AAA_BBB_init);
